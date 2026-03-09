@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Drinker</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a0f">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg2: #12121a;
+            --surface: #1a1a26;
+            --surface2: #22223a;
+            --surface3: #2a2a45;
+            --border: rgba(255,255,255,0.08);
+            --border2: rgba(255,255,255,0.14);
+            --accent: #ff6b35;
+            --accent2: #a855f7;
+            --accent3: #22d3ee;
+            --green: #10b981;
+            --yellow: #fbbf24;
+            --red: #f43f5e;
+            --text: #f0f0ff;
+            --text2: #a0a0c0;
+            --text3: #5a5a80;
+            --glow-accent: rgba(255,107,53,0.4);
+            --glow-green: rgba(16,185,129,0.35);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 90px;
+            background-image:
+                radial-gradient(ellipse at 20% 20%, rgba(168,85,247,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(255,107,53,0.06) 0%, transparent 50%);
+        }
+
+        .app { max-width: 430px; margin: 0 auto; padding: 0 16px; }
+
+        /* ── Header ── */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 0 16px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 18px;
+        }
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px; letter-spacing: -0.5px; color: var(--text);
+        }
+        .logo em { color: var(--accent); font-style: italic; }
+        .logo-sub { font-size: 9px; color: var(--text3); font-family: 'Space Mono', monospace; letter-spacing: 0.15em; margin-top: 1px; }
+
+        .header-actions { display: flex; gap: 8px; }
+        .btn-ghost {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            color: var(--text2);
+            padding: 7px 14px;
+            border-radius: 100px;
+            font-size: 11px; font-weight: 700;
+            cursor: pointer;
+            font-family: 'Space Mono', monospace;
+            transition: all 0.2s;
+        }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-ghost:active { transform: scale(0.95); }
+
+        /* ── Tab Nav ── */
+        .tab-nav {
+            display: flex; gap: 3px;
+            background: var(--surface);
+            border-radius: 14px; padding: 4px;
+            margin-bottom: 18px;
+            border: 1px solid var(--border);
+        }
+        .tab-btn {
+            flex: 1; padding: 9px 4px;
+            border-radius: 10px;
+            font-size: 11px; font-weight: 700;
+            cursor: pointer; transition: all 0.25s;
+            text-align: center; color: var(--text3);
+            background: none; border: none;
+            font-family: 'Noto Sans JP', sans-serif;
+            letter-spacing: 0.02em;
+        }
+        .tab-btn.active {
+            background: var(--accent); color: white;
+            box-shadow: 0 2px 12px var(--glow-accent);
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px; padding: 14px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+        .card:focus-within { border-color: var(--border2); }
+        .card-label {
+            font-size: 9px; color: var(--text3);
+            font-weight: 700; letter-spacing: 0.1em;
+            text-transform: uppercase; margin-bottom: 8px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* ── Date Row ── */
+        .date-row { display: flex; gap: 8px; align-items: stretch; margin-bottom: 12px; }
+        .date-row .card { flex: 1; margin-bottom: 0; }
+        .date-nav-btn {
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--text2); border-radius: 14px; width: 40px;
+            cursor: pointer; font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .date-nav-btn:active { background: var(--surface2); transform: scale(0.92); }
+        input[type="date"], input[type="text"], input[type="time"] {
+            background: transparent; border: none;
+            color: var(--text); font-family: 'Space Mono', monospace;
+            font-size: 15px; font-weight: 700; width: 100%; outline: none; cursor: pointer;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
+        .day-badge {
+            display: inline-block; font-size: 10px; font-weight: 900;
+            padding: 2px 8px; border-radius: 100px; margin-left: 6px;
+            font-family: 'Space Mono', monospace;
+        }
+        .day-sun { background: rgba(244,63,94,0.18); color: #f43f5e; }
+        .day-sat { background: rgba(34,211,238,0.15); color: var(--accent3); }
+        .day-week { background: var(--surface2); color: var(--text3); }
+
+        /* ── Week Strip ── */
+        .week-strip {
+            display: flex; gap: 4px; margin-bottom: 14px;
+        }
+        .week-day {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            padding: 8px 2px; border-radius: 12px; cursor: pointer;
+            background: var(--surface); border: 1px solid var(--border);
+            transition: all 0.2s; position: relative;
+        }
+        .week-day.today { border-color: var(--accent); background: rgba(255,107,53,0.1); }
+        .week-day.selected { border-color: var(--accent2); background: rgba(168,85,247,0.12); }
+        .week-day.has-drink::after {
+            content: ''; position: absolute; bottom: 5px;
+            width: 4px; height: 4px; border-radius: 50%; background: var(--accent);
+        }
+        .week-day.no-drink-day::after {
+            content: ''; position: absolute; bottom: 5px;
+            width: 4px; height: 4px; border-radius: 50%; background: var(--green);
+        }
+        .week-day-label { font-size: 9px; color: var(--text3); font-family: 'Space Mono', monospace; }
+        .week-day-num { font-size: 14px; font-weight: 900; color: var(--text2); margin: 2px 0 6px; }
+        .week-day.today .week-day-num { color: var(--accent); }
+        .week-day.selected .week-day-num { color: var(--accent2); }
+
+        /* ── No Drink Toggle ── */
+        .no-drink-toggle {
+            display: flex; align-items: center; gap: 10px;
+            cursor: pointer; padding: 12px 16px; border-radius: 14px;
+            background: var(--surface); border: 1px solid var(--border);
+            transition: all 0.25s; margin-bottom: 12px;
+        }
+        .no-drink-toggle.active {
+            background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.4);
+            box-shadow: 0 0 20px rgba(16,185,129,0.1);
+        }
+        .toggle-switch {
+            width: 38px; height: 22px; border-radius: 100px;
+            background: var(--surface3); position: relative;
+            transition: background 0.25s; flex-shrink: 0;
+        }
+        .toggle-switch::after {
+            content: ''; position: absolute; top: 3px; left: 3px;
+            width: 16px; height: 16px; border-radius: 50%;
+            background: white; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+        }
+        .no-drink-toggle.active .toggle-switch { background: var(--green); }
+        .no-drink-toggle.active .toggle-switch::after { transform: translateX(16px); }
+        .toggle-label { font-size: 12px; font-weight: 700; color: var(--text3); }
+        .no-drink-toggle.active .toggle-label { color: var(--green); }
+
+        /* ── Alc Display ── */
+        .alc-display {
+            background: linear-gradient(135deg, rgba(255,107,53,0.12) 0%, rgba(168,85,247,0.08) 100%);
+            border: 1px solid rgba(255,107,53,0.25);
+            border-radius: 22px; padding: 18px; margin-bottom: 12px;
+            position: relative; overflow: hidden;
+        }
+        .alc-display::before {
+            content: ''; position: absolute; top: -40px; right: -40px;
+            width: 140px; height: 140px; background: var(--accent);
+            border-radius: 50%; opacity: 0.08; filter: blur(40px); pointer-events: none;
+        }
+        .alc-label {
+            font-size: 9px; color: rgba(255,107,53,0.7);
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;
+            font-family: 'Space Mono', monospace;
+        }
+        .alc-row { display: flex; align-items: baseline; gap: 6px; margin: 8px 0; }
+        .alc-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 58px; color: var(--accent); line-height: 1;
+            transition: color 0.4s;
+        }
+        .alc-value.caution { color: var(--yellow); }
+        .alc-value.danger { color: var(--red); }
+        .alc-unit { font-size: 16px; color: var(--text2); font-family: 'Space Mono', monospace; }
+        .alc-bar-wrap {
+            margin-top: 10px; height: 5px;
+            background: rgba(255,255,255,0.08); border-radius: 100px; overflow: hidden;
+        }
+        .alc-bar {
+            height: 100%; border-radius: 100px;
+            transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1), background 0.4s;
+            background: var(--green);
+        }
+        .alc-bar.caution { background: var(--yellow); }
+        .alc-bar.danger { background: var(--red); }
+        .alc-hints { display: flex; justify-content: space-between; margin-top: 5px; }
+        .alc-hint { font-size: 9px; color: var(--text3); font-family: 'Space Mono', monospace; }
+        .alc-status { font-size: 11px; font-weight: 700; margin-top: 8px; letter-spacing: 0.03em; }
+
+        /* ── No Drink Banner ── */
+        .no-drink-banner {
+            display: none;
+            background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 22px; padding: 24px; text-align: center; margin-bottom: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+        .no-drink-banner.show { display: block; }
+        .no-drink-banner .icon { font-size: 36px; }
+        .no-drink-banner p { font-weight: 900; color: var(--green); margin-top: 6px; font-size: 14px; }
+
+        /* ── Sessions ── */
+        .session-wrap { margin-bottom: 10px; animation: slideIn 0.2s ease; }
+        @keyframes slideIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform:none; } }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+        .session-header {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px 16px 0 0; padding: 11px 14px;
+            border-bottom: 2px solid var(--accent);
+        }
+        .session-header.collapsed { border-radius: 16px; border-bottom: 1px solid var(--border); }
+        .session-num {
+            font-family: 'Playfair Display', serif; font-size: 22px;
+            color: var(--accent); min-width: 24px; line-height: 1;
+        }
+        .session-name-input {
+            flex: 1; background: transparent; border: none; outline: none;
+            font-family: 'Noto Sans JP', sans-serif; font-size: 13px; font-weight: 700;
+            color: var(--text);
+        }
+        .session-alc-badge {
+            font-family: 'Space Mono', monospace; font-size: 11px;
+            color: var(--accent); font-weight: 700; white-space: nowrap;
+            background: rgba(255,107,53,0.12); padding: 3px 9px;
+            border-radius: 100px; border: 1px solid rgba(255,107,53,0.25);
+        }
+        .session-ctrl-btn {
+            background: none; border: none; cursor: pointer;
+            font-size: 14px; color: var(--text3); padding: 2px 4px; line-height: 1;
+            transition: color 0.2s;
+        }
+        .session-ctrl-btn:hover { color: var(--text); }
+        .session-body {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 0 0 16px 16px; padding: 12px; border-top: none;
+        }
+        .session-memo-label {
+            font-size: 9px; color: var(--text3); font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px;
+            font-family: 'Space Mono', monospace;
+        }
+        .session-memo-input {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 8px 12px; width: 100%;
+            color: var(--text); font-size: 12px;
+            font-family: 'Noto Sans JP', sans-serif; outline: none; margin-bottom: 10px;
+            transition: border-color 0.2s;
+        }
+        .session-memo-input:focus { border-color: var(--accent2); }
+
+        /* ── Drink Items ── */
+        .drink-item {
+            display: flex; align-items: center;
+            padding: 9px 12px; border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface2); margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .drink-item.has-count {
+            border-color: rgba(255,107,53,0.35);
+            background: rgba(255,107,53,0.06);
+        }
+        .drink-icon { font-size: 20px; width: 28px; text-align: center; }
+        .drink-name { font-size: 11px; font-weight: 700; color: var(--text); flex: 1; margin-left: 10px; line-height: 1.35; }
+        .drink-alc { font-size: 9px; color: var(--text3); font-family: 'Space Mono', monospace; margin-top: 1px; }
+        .count-ctrl { display: flex; align-items: center; gap: 8px; }
+        .count-num {
+            font-family: 'Playfair Display', serif; font-size: 22px;
+            color: var(--accent); width: 24px; text-align: center;
+        }
+        .btn-plus {
+            width: 32px; height: 32px; border: none; cursor: pointer;
+            font-size: 20px; border-radius: 50%; background: var(--accent); color: white;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s; touch-action: manipulation;
+            box-shadow: 0 2px 8px var(--glow-accent);
+            line-height: 1;
+        }
+        .btn-plus:active { transform: scale(0.88); box-shadow: none; }
+        .btn-minus {
+            width: 26px; height: 26px; border: 1px solid var(--border2); cursor: pointer;
+            font-size: 17px; border-radius: 50%; background: var(--surface3); color: var(--text2);
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s; touch-action: manipulation; line-height: 1;
+        }
+        .btn-minus:active { transform: scale(0.88); }
+
+        .add-session-btn {
+            width: 100%; padding: 12px; border: 1.5px dashed var(--border2);
+            border-radius: 16px; background: none; color: var(--text3);
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            font-family: 'Noto Sans JP', sans-serif; transition: all 0.2s; margin-bottom: 12px;
+        }
+        .add-session-btn:active { border-color: var(--accent); color: var(--accent); background: rgba(255,107,53,0.05); }
+
+        /* ── Info / Sleep / Fail ── */
+        .info-row { margin-bottom: 10px; }
+        .info-label {
+            font-size: 9px; color: var(--text3); font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px;
+            font-family: 'Space Mono', monospace;
+        }
+        .info-input {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 12px; padding: 10px 14px; width: 100%;
+            color: var(--text); font-size: 13px;
+            font-family: 'Noto Sans JP', sans-serif; outline: none; transition: border-color 0.2s;
+        }
+        .info-input:focus { border-color: var(--accent2); }
+
+        .fail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .fail-btn {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px 4px; border-radius: 12px; border: 1px solid var(--border);
+            background: var(--surface2); cursor: pointer; transition: all 0.2s; position: relative;
+        }
+        .fail-btn .fail-icon { font-size: 22px; }
+        .fail-btn .fail-label { font-size: 9px; font-weight: 700; color: var(--text3); margin-top: 4px; text-align: center; line-height: 1.3; }
+        .fail-btn.active { background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.4); }
+        .fail-btn.active .fail-label { color: var(--red); }
+        .fail-check {
+            position: absolute; top: 5px; right: 6px; width: 14px; height: 14px;
+            border-radius: 50%; border: 1.5px solid var(--border2);
+            background: var(--surface3); display: flex; align-items: center; justify-content: center; font-size: 9px;
+        }
+        .fail-btn.active .fail-check { background: var(--red); border-color: var(--red); color: white; }
+
+        /* ── Stats ── */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 14px; text-align: center;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-1px); border-color: var(--border2); }
+        .stat-value {
+            font-family: 'Playfair Display', serif; font-size: 30px;
+            color: var(--text); line-height: 1;
+        }
+        .stat-value.warn { color: var(--red); }
+        .stat-value.good { color: var(--green); }
+        .stat-label { font-size: 9px; color: var(--text3); font-weight: 700; text-transform: uppercase; margin-top: 5px; letter-spacing: 0.08em; font-family: 'Space Mono', monospace; }
+
+        .chart-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 18px; padding: 16px; margin-bottom: 12px;
+        }
+        .chart-title { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; font-family: 'Space Mono', monospace; }
+
+        /* ── Heatmap ── */
+        .heatmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+        .heatmap-cell {
+            aspect-ratio: 1; border-radius: 4px;
+            background: var(--surface2); position: relative; cursor: default;
+            transition: transform 0.15s;
+        }
+        .heatmap-cell:hover { transform: scale(1.15); z-index: 1; }
+
+        /* ── Settings / Buttons ── */
+        .btn-action {
+            padding: 12px 16px; border-radius: 12px; font-size: 12px; font-weight: 700;
+            cursor: pointer; border: 1px solid var(--border2);
+            font-family: 'Noto Sans JP', sans-serif; transition: all 0.2s;
+            width: 100%; text-align: center; margin-bottom: 8px;
+            background: var(--surface2); color: var(--text);
+        }
+        .btn-csv { background: rgba(34,211,238,0.1); color: var(--accent3); border-color: rgba(34,211,238,0.25); }
+        .btn-danger { background: rgba(244,63,94,0.1); color: var(--red); border-color: rgba(244,63,94,0.25); }
+        .btn-action:active { opacity: 0.7; transform: scale(0.98); }
+
+        .settings-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; margin-bottom: 8px;
+        }
+        .settings-label { font-size: 12px; font-weight: 700; }
+        .settings-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+        /* ── Custom Drink Form ── */
+        .custom-drink-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .custom-input {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 8px 10px; width: 100%;
+            color: var(--text); font-size: 12px;
+            font-family: 'Noto Sans JP', sans-serif; outline: none; transition: border-color 0.2s;
+        }
+        .custom-input:focus { border-color: var(--accent2); }
+        .btn-add-custom {
+            width: 100%; padding: 10px; border-radius: 10px;
+            background: rgba(168,85,247,0.15); color: var(--accent2);
+            border: 1px solid rgba(168,85,247,0.3); font-size: 12px; font-weight: 700;
+            cursor: pointer; margin-top: 8px; font-family: 'Noto Sans JP', sans-serif;
+            transition: all 0.2s;
+        }
+        .btn-add-custom:active { opacity: 0.7; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--surface2); border: 1px solid var(--border2);
+            color: var(--text); padding: 11px 22px; border-radius: 100px;
+            font-size: 12px; font-weight: 700; z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            pointer-events: none; white-space: nowrap;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7); z-index: 500;
+            align-items: flex-end; justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-sheet {
+            background: var(--surface); border: 1px solid var(--border2);
+            border-radius: 24px 24px 0 0; padding: 24px; width: 100%; max-width: 430px;
+            animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+        .modal-title {
+            font-family: 'Playfair Display', serif; font-size: 20px;
+            margin-bottom: 14px; color: var(--text);
+        }
+        textarea.modal-input {
+            width: 100%; height: 120px; background: var(--surface2);
+            border: 1px solid var(--border); color: var(--text); border-radius: 14px;
+            padding: 12px; font-size: 12px; font-family: 'Space Mono', monospace;
+            resize: none; outline: none; margin-bottom: 14px; transition: border-color 0.2s;
+        }
+        textarea.modal-input:focus { border-color: var(--accent2); }
+        .modal-actions { display: flex; gap: 10px; }
+        .modal-btn {
+            flex: 1; padding: 13px; border-radius: 14px; font-size: 13px; font-weight: 700;
+            cursor: pointer; font-family: 'Noto Sans JP', sans-serif; border: none; transition: all 0.2s;
+        }
+        .modal-btn-cancel { background: var(--surface2); color: var(--text2); }
+        .modal-btn-ok { background: var(--accent); color: white; box-shadow: 0 4px 16px var(--glow-accent); }
+        .modal-btn:active { transform: scale(0.97); }
+
+        /* ── Bottom Nav ── */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(10,10,15,0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-top: 1px solid var(--border);
+            padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+        .bottom-nav-inner {
+            max-width: 430px; margin: 0 auto;
+            display: flex; justify-content: space-around;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 3px; cursor: pointer; padding: 6px 20px;
+            border-radius: 12px; transition: all 0.2s; border: none; background: none;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        .nav-item .nav-icon { font-size: 20px; transition: transform 0.2s; }
+        .nav-item .nav-label { font-size: 9px; font-weight: 700; color: var(--text3); letter-spacing: 0.05em; }
+        .nav-item.active .nav-label { color: var(--accent); }
+        .nav-item.active .nav-icon { transform: scale(1.15); }
+        .nav-item:active .nav-icon { transform: scale(0.9); }
+
+        /* ── Divider ── */
+        .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+        /* ── Month nav ── */
+        .month-nav { display: flex; gap: 8px; margin-bottom: 14px; }
+        .month-nav .btn-action { margin-bottom: 0; flex: 1; padding: 10px; }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 100px; }
+
+        canvas { display: block; width: 100% !important; }
+
+        /* ── AI Analysis Card ── */
+        .ai-card {
+            background: linear-gradient(135deg, rgba(168,85,247,0.12) 0%, rgba(34,211,238,0.08) 100%);
+            border: 1px solid rgba(168,85,247,0.3);
+            border-radius: 20px; padding: 18px; margin-bottom: 14px;
+            position: relative; overflow: hidden;
+        }
+        .ai-card::before {
+            content: ''; position: absolute; top: -50px; right: -50px;
+            width: 160px; height: 160px; background: var(--accent2);
+            border-radius: 50%; opacity: 0.07; filter: blur(50px); pointer-events: none;
+        }
+        .ai-card-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+        }
+        .ai-card-title {
+            display: flex; align-items: center; gap: 8px;
+            font-family: 'Space Mono', monospace; font-size: 10px;
+            font-weight: 700; color: var(--accent2); letter-spacing: 0.1em; text-transform: uppercase;
+        }
+        .ai-badge {
+            background: rgba(168,85,247,0.2); border: 1px solid rgba(168,85,247,0.4);
+            color: var(--accent2); font-size: 9px; font-weight: 700;
+            padding: 2px 8px; border-radius: 100px; font-family: 'Space Mono', monospace;
+            letter-spacing: 0.08em;
+        }
+        .ai-btn {
+            background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.35);
+            color: var(--accent2); padding: 8px 16px; border-radius: 100px;
+            font-size: 11px; font-weight: 700; cursor: pointer;
+            font-family: 'Space Mono', monospace; transition: all 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .ai-btn:hover { background: rgba(168,85,247,0.25); border-color: var(--accent2); }
+        .ai-btn:active { transform: scale(0.95); }
+        .ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .ai-spinner {
+            width: 12px; height: 12px; border: 2px solid rgba(168,85,247,0.3);
+            border-top-color: var(--accent2); border-radius: 50%;
+            animation: spin 0.7s linear infinite; display: none;
+        }
+        .ai-btn.loading .ai-spinner { display: block; }
+        .ai-btn.loading .ai-btn-text { opacity: 0.6; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .ai-content { min-height: 40px; }
+        .ai-placeholder {
+            color: var(--text3); font-size: 12px; line-height: 1.6;
+            font-style: italic; text-align: center; padding: 10px 0;
+        }
+        .ai-insight { display: none; animation: fadeIn 0.4s ease; }
+        .ai-insight.show { display: block; }
+        .ai-insight-block {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+        }
+        .ai-insight-block:last-child { margin-bottom: 0; }
+        .ai-insight-label {
+            font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+            text-transform: uppercase; font-family: 'Space Mono', monospace;
+            margin-bottom: 6px;
+        }
+        .ai-insight-label.positive { color: var(--green); }
+        .ai-insight-label.warning { color: var(--yellow); }
+        .ai-insight-label.danger { color: var(--red); }
+        .ai-insight-label.info { color: var(--accent3); }
+        .ai-insight-label.purple { color: var(--accent2); }
+        .ai-insight-text { font-size: 12px; line-height: 1.75; color: var(--text2); }
+        .ai-insight-text strong { color: var(--text); }
+        .ai-timestamp {
+            font-size: 9px; color: var(--text3); text-align: right;
+            margin-top: 10px; font-family: 'Space Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <header>
+        <div>
+            <div class="logo">The <em>Drinker</em> 🥂</div>
+            <div class="logo-sub">ALCOHOL TRACKER</div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-ghost" onclick="downloadCSV()">CSV</button>
+        </div>
+    </header>
+
+    <!-- RECORD -->
+    <div id="view-record">
+        <div class="week-strip" id="weekStrip"></div>
+        <div class="date-row">
+            <button class="date-nav-btn" onclick="changeDate(-1)">‹</button>
+            <div class="card" style="margin-bottom:0;flex:1;">
+                <div class="card-label">📅 日付</div>
+                <div style="display:flex;align-items:center;">
+                    <input type="date" id="dateInput">
+                    <span id="dayBadge" class="day-badge day-week">月</span>
+                </div>
+            </div>
+            <button class="date-nav-btn" onclick="changeDate(1)">›</button>
+        </div>
+
+        <div class="no-drink-toggle" id="noDrinkToggle" onclick="toggleNoDrinkDay()">
+            <div class="toggle-switch"></div>
+            <span class="toggle-label" id="toggleLabel">🌿 今日を休肝日にする</span>
+        </div>
+
+        <div class="alc-display" id="alcDisplay">
+            <div class="alc-label">本日の純アルコール量（全セッション合計）</div>
+            <div class="alc-row">
+                <div class="alc-value" id="totalAlcohol">0.0</div>
+                <span class="alc-unit">g</span>
+            </div>
+            <div class="alc-bar-wrap"><div class="alc-bar" id="alcBar" style="width:0%"></div></div>
+            <div class="alc-hints">
+                <span class="alc-hint">0</span>
+                <span class="alc-hint">適量 20g</span>
+                <span class="alc-hint">節度 40g</span>
+                <span class="alc-hint">過多 60g+</span>
+            </div>
+            <div class="alc-status" id="alcStatus"></div>
+        </div>
+
+        <div class="no-drink-banner" id="noDrinkBanner">
+            <div class="icon">🌿</div><p>今日は休肝日 — よくできました！</p>
+        </div>
+
+        <div id="sessionList"></div>
+        <button class="add-session-btn" id="addSessionBtn" onclick="addSession()">＋ セッションを追加</button>
+
+        <div class="card">
+            <div class="info-row">
+                <div class="info-label">💤 就寝時間（1日共通）</div>
+                <input type="time" class="info-input" id="sleepTimeInput" oninput="saveDailyInfo()">
+            </div>
+            <div class="info-row" style="margin-bottom:0;">
+                <div class="info-label">😵 やっちまった…（1日共通）</div>
+                <div class="fail-grid" id="failGrid">
+                    <label class="fail-btn" data-fail="ramen"><input type="checkbox" onchange="toggleFail('ramen')" style="display:none"><span class="fail-icon">🍜</span><span class="fail-label">シメのラーメン</span></label>
+                    <label class="fail-btn" data-fail="latenight"><input type="checkbox" onchange="toggleFail('latenight')" style="display:none"><span class="fail-icon">🌙</span><span class="fail-label">深夜食い</span></label>
+                    <label class="fail-btn" data-fail="toomuch"><input type="checkbox" onchange="toggleFail('toomuch')" style="display:none"><span class="fail-icon">🍺</span><span class="fail-label">飲みすぎた</span></label>
+                    <label class="fail-btn" data-fail="overspend"><input type="checkbox" onchange="toggleFail('overspend')" style="display:none"><span class="fail-icon">💸</span><span class="fail-label">使いすぎた</span></label>
+                    <label class="fail-btn" data-fail="oversleep"><input type="checkbox" onchange="toggleFail('oversleep')" style="display:none"><span class="fail-icon">😴</span><span class="fail-label">寝坊した</span></label>
+                    <label class="fail-btn" data-fail="neochi"><input type="checkbox" onchange="toggleFail('neochi')" style="display:none"><span class="fail-icon">💤</span><span class="fail-label">寝落ちした</span></label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div id="view-stats" style="display:none;">
+        <div class="month-nav">
+            <button class="btn-action" style="margin-bottom:0" onclick="changeStatsMonth(-1)">◀ 前月</button>
+            <div id="statsMonthLabel" class="btn-action" style="background:var(--surface);text-align:center;margin-bottom:0;color:var(--text);font-family:'Playfair Display',serif;font-size:16px;"></div>
+            <button class="btn-action" style="margin-bottom:0" onclick="changeStatsMonth(1)">翌月 ▶</button>
+        </div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="chart-card">
+            <div class="chart-title">📊 月間アルコール量 (g)</div>
+            <div style="position:relative;height:160px;width:100%;"><canvas id="monthlyChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">🗓 月間ヒートマップ</div>
+            <div id="heatmapWrap"></div>
+            <div style="display:flex;gap:12px;margin-top:8px;justify-content:flex-end;">
+                <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:2px;background:var(--surface2)"></div><span style="font-size:9px;color:var(--text3);font-family:'Space Mono',monospace;">0g</span></div>
+                <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:2px;background:rgba(255,107,53,0.35)"></div><span style="font-size:9px;color:var(--text3);font-family:'Space Mono',monospace;">~20g</span></div>
+                <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:2px;background:rgba(255,107,53,0.7)"></div><span style="font-size:9px;color:var(--text3);font-family:'Space Mono',monospace;">~40g</span></div>
+                <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:2px;background:#f43f5e"></div><span style="font-size:9px;color:var(--text3);font-family:'Space Mono',monospace;">60g+</span></div>
+            </div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">💤 アルコール量 vs 就寝時間</div>
+            <div style="position:relative;height:160px;width:100%;"><canvas id="scatterChart"></canvas></div>
+        </div>
+
+        <!-- AI Analysis Card -->
+        <div class="ai-card">
+            <div class="ai-card-header">
+                <div class="ai-card-title">
+                    <span>✦</span>
+                    <span>AI 飲酒パターン分析</span>
+                </div>
+                <span class="ai-badge">Claude AI</span>
+            </div>
+            <div class="ai-content">
+                <div class="ai-placeholder" id="aiPlaceholder">「分析する」を押すと、今月の飲酒データをAIが洞察します</div>
+                <div class="ai-insight" id="aiInsight"></div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:14px;">
+                <button class="ai-btn" id="aiBtn" onclick="runAIAnalysis()">
+                    <div class="ai-spinner"></div>
+                    <span class="ai-btn-text">✦ 分析する</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="view-settings" style="display:none;">
+        <div class="card" style="margin-bottom:16px;">
+            <div style="font-family:'Playfair Display',serif;font-size:18px;margin-bottom:4px;">データ管理</div>
+            <div style="font-size:11px;color:var(--text3);">バックアップ・復元・エクスポート</div>
+        </div>
+        <button class="btn-action btn-csv" onclick="downloadCSV()">📥 CSVダウンロード</button>
+        <button class="btn-action" onclick="exportData()">📤 データをコピー（バックアップ）</button>
+        <button class="btn-action" onclick="openImportModal()">📋 データを貼り付け（復元）</button>
+        <div class="divider"></div>
+        <div class="card" style="margin-bottom:16px;">
+            <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:4px;">カスタム飲み物を追加</div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">オリジナルのお酒を登録できます</div>
+            <div class="custom-drink-grid">
+                <input class="custom-input" id="customName" placeholder="名前（例：芋焼酎）">
+                <input class="custom-input" id="customIcon" placeholder="アイコン（例：🥃）">
+                <input class="custom-input" id="customAlc" placeholder="アルコール量(g)" type="number" step="0.1">
+                <input class="custom-input" id="customNote" placeholder="備考">
+            </div>
+            <button class="btn-add-custom" onclick="addCustomDrink()">＋ カスタム飲み物を追加</button>
+            <div id="customDrinkList" style="margin-top:10px;"></div>
+        </div>
+        <div class="settings-row" style="margin-bottom:16px;">
+            <div><div class="settings-label">⚠️ 全データ削除</div><div class="settings-sub">この操作は元に戻せません</div></div>
+            <button class="btn-ghost" style="background:rgba(244,63,94,0.1);color:var(--red);border-color:rgba(244,63,94,0.3);" onclick="resetAllData()">削除</button>
+        </div>
+        <div class="card">
+            <div class="card-label">このアプリについて</div>
+            <div style="font-size:11px;color:var(--text3);line-height:1.8;">
+                純アルコール量 = 飲酒量(ml) × アルコール度数(%) × 0.8<br>
+                厚労省の目安は純アルコール<strong style="color:var(--text)">1日20g程度</strong>です。<br>
+                概算値であり、医療的アドバイスではありません。
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+        <button class="nav-item active" id="nav-record" onclick="switchTab('record')">
+            <span class="nav-icon">📝</span><span class="nav-label">記録</span>
+        </button>
+        <button class="nav-item" id="nav-stats" onclick="switchTab('stats')">
+            <span class="nav-icon">📊</span><span class="nav-label">統計</span>
+        </button>
+        <button class="nav-item" id="nav-settings" onclick="switchTab('settings')">
+            <span class="nav-icon">⚙️</span><span class="nav-label">設定</span>
+        </button>
+    </div>
+</nav>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="importModal">
+    <div class="modal-sheet">
+        <div class="modal-title">データを貼り付け</div>
+        <textarea class="modal-input" id="importTextarea" placeholder="エクスポートしたJSONデータを貼り付けてください..."></textarea>
+        <div class="modal-actions">
+            <button class="modal-btn modal-btn-cancel" onclick="closeImportModal()">キャンセル</button>
+            <button class="modal-btn modal-btn-ok" onclick="confirmImport()">復元する</button>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_DRINKS = [
+    { id: 'draft_beer',    name: '生ビール (500ml)',         icon: '🍻', alc: 20.0 },
+    { id: 'can_beer_350',  name: '缶ビール (350ml)',          icon: '🍺', alc: 14.0 },
+    { id: 'can_beer_500',  name: '缶ビール (500ml)',          icon: '🍺', alc: 20.0 },
+    { id: 'wine_glass',    name: 'ワイングラス (120ml)',      icon: '🍷', alc: 11.5 },
+    { id: 'wine_bottle',   name: 'ワインボトル (750ml)',      icon: '🍾', alc: 72.0 },
+    { id: 'whisky_rock',   name: 'ウイスキー (ダブル60ml)',   icon: '🥃', alc: 19.2 },
+    { id: 'highball',      name: 'ハイボール (350ml)',        icon: '🫧', alc: 19.6 },
+    { id: 'sake',          name: '日本酒 (1合)',              icon: '🍶', alc: 21.6 },
+    { id: 'shochu_rock',   name: '焼酎ロック (60ml)',         icon: '🥃', alc: 12.0 },
+    { id: 'shochu_hot',    name: '焼酎お湯割り (180ml)',      icon: '🍵', alc: 14.4 },
+    { id: 'chuhai',        name: '酎ハイ各種 (350ml)',        icon: '🫗', alc: 14.0 },
+    { id: 'hoppy_set',     name: 'ホッピーセット (390ml)',    icon: '🍺', alc: 14.1 },
+    { id: 'hoppy_naka',    name: 'ホッピー中 (60ml)',         icon: '🧊', alc: 12.0 },
+    { id: 'awamori',       name: '泡盛ロック (60ml)',         icon: '🥃', alc: 14.4 },
+    { id: 'shaoxing',      name: '紹興酒 (120ml)',            icon: '🥃', alc: 16.3 },
+];
+
+const HOLIDAYS = ["01-01","01-12","02-11","02-23","03-20","04-29","05-03","05-04","05-05","07-20","08-11","09-21","09-22","10-12","11-03","11-23"];
+const DAY_LABELS = "日月火水木金土";
+const SESSION_DEFAULT_NAMES = ['1次会','2次会','3次会','4次会','5次会'];
+
+let db = {}, dailyInfo = {}, customDrinks = [];
+let statsYear, statsMonth;
+let monthlyChart = null, scatterChart = null;
+
+function getDRINK_TYPES() { return [...DEFAULT_DRINKS, ...customDrinks]; }
+
+// ─── Storage ──────────────────────────────────────────────────
+async function storageGet(key) {
+    try { const r = await window.storage.get(key); return r ? JSON.parse(r.value) : null; }
+    catch { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
+}
+async function storageSet(key, val) {
+    const str = JSON.stringify(val);
+    try { await window.storage.set(key, str); } catch {}
+    try { localStorage.setItem(key, str); } catch {}
+}
+
+// ─── Init ─────────────────────────────────────────────────────
+async function init() {
+    showLoading(true);
+    db           = (await storageGet('drinker_logs'))   || {};
+    dailyInfo    = (await storageGet('drinker_info'))   || {};
+    customDrinks = (await storageGet('drinker_custom')) || [];
+    const now = new Date();
+    statsYear = now.getFullYear(); statsMonth = now.getMonth();
+    document.getElementById('dateInput').value = now.toLocaleDateString('sv-SE');
+    showLoading(false);
+    render();
+    renderCustomDrinkList();
+}
+
+function showLoading(on) {
+    let el = document.getElementById('loadingOverlay');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'loadingOverlay';
+        el.style.cssText = 'position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.3s;';
+        el.innerHTML = '<div style="text-align:center"><div style="font-family:\'Playfair Display\',serif;font-size:22px;color:var(--accent);">The <em>Drinker</em></div><div style="margin-top:12px;width:32px;height:32px;border:2px solid rgba(168,85,247,0.3);border-top-color:var(--accent2);border-radius:50%;animation:spin 0.7s linear infinite;margin:12px auto 0;"></div></div>';
+        document.body.appendChild(el);
+    }
+    if (on) { el.style.opacity = '1'; el.style.pointerEvents = 'all'; }
+    else { el.style.opacity = '0'; el.style.pointerEvents = 'none'; setTimeout(() => el.remove(), 400); }
+}
+
+function getDate() { return document.getElementById('dateInput').value; }
+
+function newSession(name) {
+    return { id: Date.now().toString() + Math.random().toString(36).slice(2), name: name || '', drinks: {}, memo: '', collapsed: false, drinksCollapsed: true };
+}
+
+function ensureDay(date) {
+    if (!db[date]) db[date] = { sessions: [] };
+    if (!Array.isArray(db[date].sessions)) {
+        const old = db[date];
+        const drinks = {};
+        getDRINK_TYPES().forEach(dt => { if (old[dt.id]) drinks[dt.id] = old[dt.id]; });
+        db[date] = { sessions: [{ id: 'legacy_' + date, name: '記録', drinks, memo: dailyInfo[date]?.memo || '', collapsed: false }] };
+    }
+    return db[date];
+}
+
+function getDayTotalAlc(date) {
+    const day = db[date];
+    if (!day) return 0;
+    const sessions = Array.isArray(day.sessions) ? day.sessions : [];
+    return sessions.reduce((sum, s) => sum + getDRINK_TYPES().reduce((ss, d) => ss + (s.drinks[d.id] || 0) * d.alc, 0), 0);
+}
+
+// ─── Tabs ─────────────────────────────────────────────────────
+function switchTab(tab) {
+    ['record','stats','settings'].forEach(t => {
+        document.getElementById('view-' + t).style.display = t === tab ? '' : 'none';
+        const nav = document.getElementById('nav-' + t);
+        if (nav) nav.classList.toggle('active', t === tab);
+    });
+    if (tab === 'stats') { window.scrollTo(0,0); renderStats(); }
+    if (tab === 'settings') renderCustomDrinkList();
+}
+
+function changeDate(delta) {
+    const d = new Date(getDate()); d.setDate(d.getDate() + delta);
+    document.getElementById('dateInput').value = d.toLocaleDateString('sv-SE');
+    render();
+}
+function changeStatsMonth(delta) {
+    statsMonth += delta;
+    if (statsMonth < 0) { statsMonth = 11; statsYear--; }
+    if (statsMonth > 11) { statsMonth = 0; statsYear++; }
+    renderStats();
+}
+
+// ─── Week Strip ───────────────────────────────────────────────
+function renderWeekStrip() {
+    const strip = document.getElementById('weekStrip');
+    strip.innerHTML = '';
+    const selected = getDate();
+    const sel = new Date(selected);
+    const dow = sel.getDay();
+    const sunday = new Date(sel);
+    sunday.setDate(sel.getDate() - dow);
+    const today = new Date().toLocaleDateString('sv-SE');
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(sunday);
+        d.setDate(sunday.getDate() + i);
+        const ds = d.toLocaleDateString('sv-SE');
+        const alc = getDayTotalAlc(ds);
+        const isNd = (dailyInfo[ds] || {}).isNoDrink;
+        const cell = document.createElement('div');
+        cell.className = 'week-day' +
+            (ds === today ? ' today' : '') +
+            (ds === selected ? ' selected' : '') +
+            (alc > 0 ? ' has-drink' : '') +
+            (isNd ? ' no-drink-day' : '');
+        cell.innerHTML = `<span class="week-day-label">${DAY_LABELS[d.getDay()]}</span><span class="week-day-num">${d.getDate()}</span>`;
+        cell.onclick = () => { document.getElementById('dateInput').value = ds; render(); };
+        strip.appendChild(cell);
+    }
+}
+
+// ─── Render ───────────────────────────────────────────────────
+function render() {
+    const date = getDate();
+    const d = new Date(date), dow = d.getDay(), mmdd = date.substring(5);
+    const isSun = dow === 0 || HOLIDAYS.includes(mmdd), isSat = dow === 6;
+    const badge = document.getElementById('dayBadge');
+    badge.textContent = `(${DAY_LABELS[dow]})`;
+    badge.className = 'day-badge ' + (isSun ? 'day-sun' : isSat ? 'day-sat' : 'day-week');
+
+    const info = dailyInfo[date] || {};
+    document.getElementById('sleepTimeInput').value = info.sleep || '';
+    const isNoDrink = !!info.isNoDrink;
+
+    document.getElementById('noDrinkToggle').classList.toggle('active', isNoDrink);
+    document.getElementById('toggleLabel').textContent = isNoDrink ? '🌿 休肝日（設定済み）' : '🌿 今日を休肝日にする';
+    document.getElementById('noDrinkBanner').classList.toggle('show', isNoDrink);
+    document.getElementById('alcDisplay').style.display = isNoDrink ? 'none' : '';
+    document.getElementById('addSessionBtn').style.display = isNoDrink ? 'none' : '';
+
+    if (!isNoDrink) {
+        const day = ensureDay(date);
+        if (day.sessions.length === 0) {
+            day.sessions.push(newSession(SESSION_DEFAULT_NAMES[0]));
+            storageSet('drinker_logs', db);
+        }
+    }
+
+    renderWeekStrip();
+    renderSessions(date, isNoDrink);
+    renderFailButtons(date);
+    updateAlcDisplay(getDayTotalAlc(date));
+}
+
+function renderSessions(date, isNoDrink) {
+    const container = document.getElementById('sessionList');
+    container.innerHTML = '';
+    if (isNoDrink) return;
+    const day = ensureDay(date);
+    day.sessions.forEach((session, idx) => {
+        const sessionAlc = getDRINK_TYPES().reduce((s, d) => s + (session.drinks[d.id] || 0) * d.alc, 0);
+        const collapsed = !!session.collapsed;
+        const wrap = document.createElement('div');
+        wrap.className = 'session-wrap';
+        const hdr = document.createElement('div');
+        hdr.className = 'session-header' + (collapsed ? ' collapsed' : '');
+        hdr.innerHTML = `
+            <span class="session-num">${idx + 1}</span>
+            <input class="session-name-input" type="text" value="${escHtml(session.name)}" placeholder="セッション名"
+                oninput="updateSessionName('${session.id}',this.value)" onclick="event.stopPropagation()">
+            <span class="session-alc-badge">${sessionAlc.toFixed(1)}g</span>
+            <button class="session-ctrl-btn" onclick="toggleSessionCollapse('${session.id}')" title="${collapsed?'展開':'折りたたむ'}">${collapsed ? '▼' : '▲'}</button>
+            ${day.sessions.length > 1 ? `<button class="session-ctrl-btn" onclick="deleteSession('${session.id}')" title="削除">🗑</button>` : ''}
+        `;
+        wrap.appendChild(hdr);
+        if (!collapsed) {
+            const body = document.createElement('div');
+            body.className = 'session-body';
+            body.innerHTML = `
+                <div class="session-memo-label">✏️ メモ（場所・相手など）</div>
+                <input class="session-memo-input" type="text" value="${escHtml(session.memo)}" placeholder="未入力"
+                    oninput="updateSessionMemo('${session.id}',this.value)">
+            `;
+            const drinksCollapsed = session.drinksCollapsed !== false;
+            const hasCount = getDRINK_TYPES().filter(d => (session.drinks[d.id] || 0) > 0);
+            const summaryRow = document.createElement('div');
+            summaryRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;';
+            const summaryIcons = hasCount.length > 0
+                ? hasCount.map(d => `<span title="${d.name}" style="font-size:14px;">${d.icon}×${session.drinks[d.id]}</span>`).join(' ')
+                : '<span style="color:var(--text3);font-size:11px;">未記録</span>';
+            summaryRow.innerHTML = `
+                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">${summaryIcons}</div>
+                <button class="session-ctrl-btn" style="font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap;"
+                    onclick="toggleDrinksCollapse('${session.id}')">${drinksCollapsed ? '▼ 編集' : '▲ 閉じる'}</button>
+            `;
+            body.appendChild(summaryRow);
+            if (!drinksCollapsed) {
+                getDRINK_TYPES().forEach(drink => {
+                    const count = session.drinks[drink.id] || 0;
+                    const item = document.createElement('div');
+                    item.className = 'drink-item' + (count > 0 ? ' has-count' : '');
+                    item.innerHTML = `
+                        <span class="drink-icon">${drink.icon}</span>
+                        <div class="drink-name">${drink.name}<div class="drink-alc">${drink.alc}g/杯</div></div>
+                        <div class="count-ctrl">
+                            <button class="btn-plus" onclick="updateCount('${session.id}','${drink.id}',1)">＋</button>
+                            <span class="count-num">${count || '·'}</span>
+                            <button class="btn-minus" onclick="updateCount('${session.id}','${drink.id}',-1)">－</button>
+                        </div>`;
+                    body.appendChild(item);
+                });
+            }
+            wrap.appendChild(body);
+        }
+        container.appendChild(wrap);
+    });
+}
+
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function updateAlcDisplay(alc) {
+    const valEl = document.getElementById('totalAlcohol');
+    valEl.textContent = alc.toFixed(1);
+    valEl.className = 'alc-value' + (alc > 40 ? ' danger' : alc > 20 ? ' caution' : '');
+    const pct = Math.min((alc / 60) * 100, 100);
+    const bar = document.getElementById('alcBar');
+    bar.style.width = pct + '%';
+    bar.className = 'alc-bar' + (alc > 40 ? ' danger' : alc > 20 ? ' caution' : '');
+    const status = document.getElementById('alcStatus');
+    if (alc === 0) { status.textContent = ''; }
+    else if (alc <= 20) { status.textContent = '✅ 適量範囲内'; status.style.color = 'var(--green)'; }
+    else if (alc <= 40) { status.textContent = '⚠️ やや多め'; status.style.color = 'var(--yellow)'; }
+    else { status.textContent = '🚨 飲みすぎ — 明日は休肝日を検討'; status.style.color = 'var(--red)'; }
+}
+
+// ─── Session Actions ──────────────────────────────────────────
+async function addSession() {
+    const date = getDate();
+    const day = ensureDay(date);
+    const name = SESSION_DEFAULT_NAMES[day.sessions.length] || `${day.sessions.length + 1}次会`;
+    day.sessions.push(newSession(name));
+    await storageSet('drinker_logs', db); render();
+}
+async function deleteSession(sessionId) {
+    if (!confirm('このセッションを削除しますか？')) return;
+    const date = getDate();
+    db[date].sessions = db[date].sessions.filter(s => s.id !== sessionId);
+    await storageSet('drinker_logs', db); render();
+}
+async function toggleDrinksCollapse(sessionId) {
+    const date = getDate();
+    const s = db[date]?.sessions?.find(s => s.id === sessionId);
+    if (s) { s.drinksCollapsed = s.drinksCollapsed === false; await storageSet('drinker_logs', db); render(); }
+}
+async function toggleSessionCollapse(sessionId) {
+    const date = getDate();
+    const s = db[date]?.sessions?.find(s => s.id === sessionId);
+    if (s) { s.collapsed = !s.collapsed; await storageSet('drinker_logs', db); render(); }
+}
+async function updateSessionName(sessionId, name) {
+    const date = getDate();
+    const s = db[date]?.sessions?.find(s => s.id === sessionId);
+    if (s) { s.name = name; await storageSet('drinker_logs', db); }
+}
+async function updateSessionMemo(sessionId, memo) {
+    const date = getDate();
+    const s = db[date]?.sessions?.find(s => s.id === sessionId);
+    if (s) { s.memo = memo; await storageSet('drinker_logs', db); }
+}
+async function updateCount(sessionId, drinkId, diff) {
+    const date = getDate();
+    if ((dailyInfo[date] || {}).isNoDrink) return;
+    const day = ensureDay(date);
+    const s = day.sessions.find(s => s.id === sessionId);
+    if (!s) return;
+    s.drinks[drinkId] = Math.max(0, (s.drinks[drinkId] || 0) + diff);
+    await storageSet('drinker_logs', db); render();
+}
+
+// ─── Daily Info ───────────────────────────────────────────────
+async function saveDailyInfo() {
+    const date = getDate();
+    if (!dailyInfo[date]) dailyInfo[date] = {};
+    dailyInfo[date].sleep = document.getElementById('sleepTimeInput').value;
+    await storageSet('drinker_info', dailyInfo);
+}
+async function toggleNoDrinkDay() {
+    const date = getDate();
+    if (!dailyInfo[date]) dailyInfo[date] = {};
+    dailyInfo[date].isNoDrink = !dailyInfo[date].isNoDrink;
+    if (dailyInfo[date].isNoDrink && db[date]) db[date].sessions = [];
+    await storageSet('drinker_info', dailyInfo);
+    await storageSet('drinker_logs', db); render();
+}
+async function toggleFail(key) {
+    const date = getDate();
+    if (!dailyInfo[date]) dailyInfo[date] = {};
+    if (!dailyInfo[date].fails) dailyInfo[date].fails = {};
+    dailyInfo[date].fails[key] = !dailyInfo[date].fails[key];
+    await storageSet('drinker_info', dailyInfo);
+    renderFailButtons(date);
+}
+function renderFailButtons(date) {
+    const fails = (dailyInfo[date] || {}).fails || {};
+    document.querySelectorAll('.fail-btn').forEach(btn => {
+        const key = btn.dataset.fail, active = !!fails[key];
+        btn.classList.toggle('active', active);
+        const cb = btn.querySelector('input'); if (cb) cb.checked = active;
+        let badge = btn.querySelector('.fail-check');
+        if (!badge) { badge = document.createElement('span'); badge.className = 'fail-check'; btn.appendChild(badge); }
+        badge.textContent = active ? '✓' : '';
+    });
+}
+
+// ─── Custom Drinks ────────────────────────────────────────────
+async function addCustomDrink() {
+    const name = document.getElementById('customName').value.trim();
+    const icon = document.getElementById('customIcon').value.trim() || '🍹';
+    const alc = parseFloat(document.getElementById('customAlc').value);
+    const note = document.getElementById('customNote').value.trim();
+    if (!name || isNaN(alc) || alc <= 0) { showToast('❌ 名前とアルコール量を入力してください'); return; }
+    const id = 'custom_' + Date.now();
+    customDrinks.push({ id, name: `${name}${note ? ' (' + note + ')' : ''}`, icon, alc });
+    await storageSet('drinker_custom', customDrinks);
+    document.getElementById('customName').value = '';
+    document.getElementById('customIcon').value = '';
+    document.getElementById('customAlc').value = '';
+    document.getElementById('customNote').value = '';
+    renderCustomDrinkList();
+    showToast('✅ カスタム飲み物を追加しました');
+}
+async function deleteCustomDrink(id) {
+    customDrinks = customDrinks.filter(d => d.id !== id);
+    await storageSet('drinker_custom', customDrinks);
+    renderCustomDrinkList();
+    showToast('🗑️ 削除しました');
+}
+function renderCustomDrinkList() {
+    const el = document.getElementById('customDrinkList');
+    if (!el) return;
+    if (customDrinks.length === 0) { el.innerHTML = ''; return; }
+    el.innerHTML = customDrinks.map(d => `
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:10px;margin-bottom:5px;border:1px solid var(--border);">
+            <span style="font-size:18px;">${d.icon}</span>
+            <div style="flex:1;"><div style="font-size:11px;font-weight:700;">${escHtml(d.name)}</div><div style="font-size:9px;color:var(--text3);font-family:'Space Mono',monospace;">${d.alc}g/杯</div></div>
+            <button onclick="deleteCustomDrink('${d.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;">🗑</button>
+        </div>
+    `).join('');
+}
+
+// ─── Stats ────────────────────────────────────────────────────
+function renderStats() {
+    const days = new Date(statsYear, statsMonth + 1, 0).getDate();
+    document.getElementById('statsMonthLabel').textContent = `${statsYear}年 ${statsMonth + 1}月`;
+    let totalAlc = 0, maxAlc = 0, drinkDays = 0, noDrinkDays = 0, failCount = 0;
+    const dailyAlcs = [];
+    for (let d = 1; d <= days; d++) {
+        const ds = `${statsYear}-${String(statsMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const info = dailyInfo[ds] || {};
+        if (info.fails) failCount += Object.values(info.fails).filter(Boolean).length;
+        if (info.isNoDrink) { noDrinkDays++; dailyAlcs.push({alc:0,nd:true}); continue; }
+        const alc = getDayTotalAlc(ds);
+        if (alc > 0) drinkDays++;
+        totalAlc += alc; maxAlc = Math.max(maxAlc, alc);
+        dailyAlcs.push({alc,nd:false});
+    }
+    const avg = drinkDays > 0 ? totalAlc / drinkDays : 0;
+
+    document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><div class="stat-value ${avg>40?'warn':avg>20?'':'good'}">${avg.toFixed(0)}<span style="font-size:14px;color:var(--text3)">g</span></div><div class="stat-label">飲酒日の平均</div></div>
+        <div class="stat-card"><div class="stat-value good">${noDrinkDays}</div><div class="stat-label">休肝日 / ${days}日</div></div>
+        <div class="stat-card"><div class="stat-value ${maxAlc>60?'warn':''}">${maxAlc.toFixed(0)}<span style="font-size:14px;color:var(--text3)">g</span></div><div class="stat-label">最大量</div></div>
+        <div class="stat-card"><div class="stat-value">${totalAlc.toFixed(0)}<span style="font-size:14px;color:var(--text3)">g</span></div><div class="stat-label">月間合計</div></div>
+        <div class="stat-card"><div class="stat-value ${failCount>5?'warn':failCount>0?'':'good'}">${failCount}</div><div class="stat-label">😵 やっちまった</div></div>
+        <div class="stat-card"><div class="stat-value">${drinkDays}</div><div class="stat-label">飲酒日数</div></div>`;
+
+    if (monthlyChart) monthlyChart.destroy();
+    monthlyChart = new Chart(document.getElementById('monthlyChart'), {
+        type: 'bar',
+        data: {
+            labels: Array.from({length:days},(_,i)=>i+1),
+            datasets: [{ data: dailyAlcs.map(x=>x.alc), backgroundColor: dailyAlcs.map(x => x.nd ? 'rgba(16,185,129,0.5)' : x.alc>40 ? 'rgba(244,63,94,0.7)' : x.alc>20 ? 'rgba(251,191,36,0.7)' : 'rgba(255,107,53,0.7)'), borderRadius: 5, borderSkipped: false }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y.toFixed(1)}g`}} },
+            scales: {
+                y: { beginAtZero:true, grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#5a5a80',font:{size:9},callback:v=>v+'g'}, border:{color:'transparent'} },
+                x: { grid:{display:false}, ticks:{color:'#5a5a80',font:{size:7}}, border:{color:'transparent'} }
+            }
+        }
+    });
+
+    renderHeatmap();
+
+    const scatterData = [];
+    for (let d = 1; d <= days; d++) {
+        const ds = `${statsYear}-${String(statsMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const info = dailyInfo[ds] || {}, alc = getDayTotalAlc(ds);
+        if (info.sleep && alc > 0) {
+            const [h, m] = info.sleep.split(':').map(Number);
+            let sd = h + m/60; if (sd < 8) sd += 24;
+            scatterData.push({x:alc, y:sd});
+        }
+    }
+    if (scatterChart) scatterChart.destroy();
+    scatterChart = new Chart(document.getElementById('scatterChart'), {
+        type: 'scatter',
+        data: { datasets: [{ data: scatterData, backgroundColor: 'rgba(168,85,247,0.6)', pointRadius: 6, pointHoverRadius: 8 }] },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>{ const h=Math.floor(ctx.parsed.y%24),m=Math.round((ctx.parsed.y%1)*60); return ` ${ctx.parsed.x.toFixed(0)}g → ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}就寝`; }}}},
+            scales: {
+                x: { title:{display:true,text:'アルコール(g)',color:'#5a5a80',font:{size:9}}, grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#5a5a80',font:{size:9}}, border:{color:'transparent'} },
+                y: { title:{display:true,text:'就寝時間',color:'#5a5a80',font:{size:9}}, grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#5a5a80',font:{size:9},callback:v=>`${String(Math.floor(v%24)).padStart(2,'0')}:00`}, border:{color:'transparent'} }
+            }
+        }
+    });
+}
+
+function renderHeatmap() {
+    const wrap = document.getElementById('heatmapWrap');
+    wrap.innerHTML = '';
+    const days = new Date(statsYear, statsMonth + 1, 0).getDate();
+    const firstDow = new Date(statsYear, statsMonth, 1).getDay();
+    const grid = document.createElement('div');
+    grid.className = 'heatmap-grid';
+    '日月火水木金土'.split('').forEach(d => {
+        const h = document.createElement('div');
+        h.style.cssText = 'text-align:center;font-size:8px;color:var(--text3);font-family:"Space Mono",monospace;padding:2px 0;';
+        h.textContent = d; grid.appendChild(h);
+    });
+    for (let i = 0; i < firstDow; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'heatmap-cell'; empty.style.background = 'transparent'; grid.appendChild(empty);
+    }
+    for (let d = 1; d <= days; d++) {
+        const ds = `${statsYear}-${String(statsMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const info = dailyInfo[ds] || {}, alc = getDayTotalAlc(ds);
+        const cell = document.createElement('div');
+        cell.className = 'heatmap-cell';
+        cell.title = `${d}日: ${info.isNoDrink ? '休肝日' : alc.toFixed(0) + 'g'}`;
+        if (info.isNoDrink) cell.style.background = 'rgba(16,185,129,0.4)';
+        else if (alc === 0) cell.style.background = 'var(--surface2)';
+        else if (alc <= 20) cell.style.background = 'rgba(255,107,53,0.3)';
+        else if (alc <= 40) cell.style.background = 'rgba(255,107,53,0.6)';
+        else cell.style.background = '#f43f5e';
+        grid.appendChild(cell);
+    }
+    wrap.appendChild(grid);
+}
+
+// ─── CSV / Export / Import ────────────────────────────────────
+function downloadCSV() {
+    let csv = "\uFEFF日付,休肝日,セッション名,メモ,就寝時間,種類,杯数,アルコール(g)\n";
+    const allDates = new Set([...Object.keys(db),...Object.keys(dailyInfo)]);
+    [...allDates].sort().forEach(date => {
+        const info = dailyInfo[date] || {};
+        if (info.isNoDrink) { csv += `${date},YES,,,,,,\n`; return; }
+        const sessions = db[date]?.sessions || [];
+        sessions.forEach(s => {
+            getDRINK_TYPES().forEach(drink => {
+                const cnt = s.drinks[drink.id] || 0;
+                if (cnt > 0) csv += `${date},,${(s.name||'').replace(/,/g,' ')},${(s.memo||'').replace(/,/g,' ')},${info.sleep||''},${drink.name},${cnt},${(cnt*drink.alc).toFixed(1)}\n`;
+            });
+        });
+    });
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = `drinker_${new Date().toLocaleDateString('sv-SE')}.csv`; a.click();
+    showToast('✅ CSVをダウンロードしました');
+}
+function exportData() {
+    navigator.clipboard.writeText(JSON.stringify({logs:db, info:dailyInfo, custom:customDrinks, exported:new Date().toISOString()}))
+        .then(() => showToast('📋 クリップボードにコピーしました'));
+}
+function openImportModal() { document.getElementById('importModal').classList.add('show'); document.getElementById('importTextarea').value=''; }
+function closeImportModal() { document.getElementById('importModal').classList.remove('show'); }
+async function confirmImport() {
+    const str = document.getElementById('importTextarea').value.trim();
+    if (!str) return;
+    try {
+        const data = JSON.parse(str);
+        db = data.logs||{}; dailyInfo = data.info||{}; customDrinks = data.custom||[];
+        await storageSet('drinker_logs', db); await storageSet('drinker_info', dailyInfo); await storageSet('drinker_custom', customDrinks);
+        closeImportModal(); render(); showToast('✅ データを復元しました');
+    } catch { showToast('❌ データの形式が正しくありません'); }
+}
+async function resetAllData() {
+    if (!confirm('全データを削除しますか？\nこの操作は元に戻せません。')) return;
+    if (!confirm('⚠️ 本当に全削除しますか？（2回目の確認）')) return;
+    db={}; dailyInfo={}; customDrinks=[];
+    await storageSet('drinker_logs',{}); await storageSet('drinker_info',{}); await storageSet('drinker_custom',[]);
+    try { await window.storage.delete('drinker_logs'); await window.storage.delete('drinker_info'); await window.storage.delete('drinker_custom'); } catch {}
+    try { localStorage.clear(); } catch {}
+    render(); showToast('🗑️ 全データを削除しました');
+}
+
+let toastTimer = null;
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+document.getElementById('dateInput').addEventListener('change', render);
+init();
+
+// ─── AI Analysis ──────────────────────────────────────────────
+async function runAIAnalysis() {
+    const btn = document.getElementById('aiBtn');
+    const placeholder = document.getElementById('aiPlaceholder');
+    const insight = document.getElementById('aiInsight');
+
+    btn.disabled = true;
+    btn.classList.add('loading');
+    placeholder.style.display = 'none';
+    insight.classList.remove('show');
+    insight.innerHTML = '';
+
+    const days = new Date(statsYear, statsMonth + 1, 0).getDate();
+    const monthStr = `${statsYear}年${statsMonth + 1}月`;
+    let totalAlc = 0, maxAlc = 0, drinkDays = 0, noDrinkDays = 0, failCount = 0;
+    const dailyData = [], drinkCounts = {}, sleepData = [];
+
+    for (let d = 1; d <= days; d++) {
+        const ds = `${statsYear}-${String(statsMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const info = dailyInfo[ds] || {};
+        const dow = new Date(ds).getDay();
+        const alc = getDayTotalAlc(ds);
+        if (info.isNoDrink) { noDrinkDays++; dailyData.push({d, alc:0, nd:true, dow}); continue; }
+        if (alc > 0) drinkDays++;
+        totalAlc += alc; maxAlc = Math.max(maxAlc, alc);
+        dailyData.push({d, alc, nd:false, dow});
+        if (info.fails) Object.values(info.fails).forEach(v => { if(v) failCount++; });
+        if (info.sleep && alc > 0) {
+            const [h, m] = info.sleep.split(':').map(Number);
+            let sd = h + m/60; if (sd < 8) sd += 24;
+            sleepData.push({alc, sleep: sd});
+        }
+        const day = db[ds];
+        if (day?.sessions) {
+            day.sessions.forEach(s => {
+                getDRINK_TYPES().forEach(dt => {
+                    if (s.drinks[dt.id] > 0) drinkCounts[dt.name] = (drinkCounts[dt.name] || 0) + s.drinks[dt.id];
+                });
+            });
+        }
+    }
+
+    const avg = drinkDays > 0 ? (totalAlc / drinkDays).toFixed(1) : 0;
+    const topDrinks = Object.entries(drinkCounts).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k}×${v}杯`).join('、');
+    const weekdayAlcs = dailyData.filter(x=>!x.nd && x.alc>0 && x.dow>=1 && x.dow<=5);
+    const weekendAlcs = dailyData.filter(x=>!x.nd && x.alc>0 && (x.dow===0||x.dow===6));
+    const weekdayAvg = weekdayAlcs.length > 0 ? (weekdayAlcs.reduce((s,x)=>s+x.alc,0)/weekdayAlcs.length).toFixed(1) : 0;
+    const weekendAvg = weekendAlcs.length > 0 ? (weekendAlcs.reduce((s,x)=>s+x.alc,0)/weekendAlcs.length).toFixed(1) : 0;
+    let sleepCorr = null;
+    if (sleepData.length >= 3) {
+        const avgAlc = sleepData.reduce((s,x)=>s+x.alc,0)/sleepData.length;
+        const avgSl = sleepData.reduce((s,x)=>s+x.sleep,0)/sleepData.length;
+        const num = sleepData.reduce((s,x)=>s+(x.alc-avgAlc)*(x.sleep-avgSl),0);
+        const den = Math.sqrt(sleepData.reduce((s,x)=>s+(x.alc-avgAlc)**2,0)*sleepData.reduce((s,x)=>s+(x.sleep-avgSl)**2,0));
+        sleepCorr = den > 0 ? (num/den).toFixed(2) : null;
+    }
+
+    const prompt = `あなたは親身な健康アドバイザーです。以下のユーザーの${monthStr}の飲酒記録データを分析し、具体的で実践的な洞察を日本語で提供してください。
+
+## データサマリー
+- 対象期間：${monthStr}（${days}日間）
+- 飲酒日数：${drinkDays}日 / 休肝日：${noDrinkDays}日
+- 月間総アルコール：${totalAlc.toFixed(0)}g
+- 飲酒日の平均アルコール量：${avg}g（厚労省目安：20g）
+- 最大飲酒量（1日）：${maxAlc.toFixed(0)}g
+- よく飲んだもの：${topDrinks || 'データなし'}
+- 平日平均：${weekdayAvg}g / 休日平均：${weekendAvg}g
+- 「やっちまった」回数：${failCount}回
+- 飲酒と就寝時間の相関係数：${sleepCorr !== null ? sleepCorr : 'データ不足'}
+
+## 回答形式
+以下のJSON形式のみで返答してください（他のテキスト不要）：
+{
+  "blocks": [
+    {"type": "positive|warning|danger|info|purple", "label": "ラベル（10文字以内）", "text": "具体的な洞察（2〜3文。数値を引用しつつ、実践的アドバイスを含む）"},
+    {"type": "...", "label": "...", "text": "..."},
+    {"type": "...", "label": "...", "text": "..."}
+  ]
+}
+
+typeは内容に応じて選択：positive=良い点、warning=注意点、danger=要改善、info=パターン発見、purple=アドバイス
+必ず3〜4ブロック返してください。`;
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-6',
+                max_tokens: 1000,
+                system: 'あなたは健康アドバイザーです。必ずJSON形式のみで返答してください。前置きや説明文は一切不要です。',
+                messages: [{ role: 'user', content: prompt }]
+            })
+        });
+
+        if (!response.ok) { const e = await response.text(); throw new Error(`HTTP ${response.status}: ${e}`); }
+        const data = await response.json();
+        const text = (data.content || []).map(c => c.text || '').join('');
+        const clean = text.replace(/```json|```/g, '').trim();
+        let parsed;
+        try { parsed = JSON.parse(clean); }
+        catch { parsed = { blocks: [{ type: 'info', label: 'AI分析結果', text: text }] }; }
+
+        insight.innerHTML = parsed.blocks.map(b => `
+            <div class="ai-insight-block">
+                <div class="ai-insight-label ${b.type}">${labelIcon(b.type)} ${b.label}</div>
+                <div class="ai-insight-text">${(b.text||'').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
+            </div>
+        `).join('') + `<div class="ai-timestamp">分析日時: ${new Date().toLocaleString('ja-JP')}</div>`;
+
+        placeholder.style.display = 'none';
+        insight.classList.add('show');
+    } catch (err) {
+        insight.classList.remove('show');
+        placeholder.style.display = 'block';
+        placeholder.innerHTML = `<span style="color:var(--red)">⚠️ 分析に失敗しました<br><span style="font-size:10px;color:var(--text3);word-break:break-all;">${err.message}</span></span>`;
+    }
+
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.querySelector('.ai-btn-text').textContent = '✦ 再分析する';
+}
+
+function labelIcon(type) {
+    return { positive:'✅', warning:'⚠️', danger:'🚨', info:'💡', purple:'🎯' }[type] || '•';
+}
+</script>
+</body>
+</html>
