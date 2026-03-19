@@ -706,9 +706,7 @@
             <div class="logo">The <em>Drinker</em> 🥂</div>
             <div class="logo-sub">ALCOHOL TRACKER</div>
         </div>
-        <div class="header-actions">
-            <button class="btn-ghost" onclick="downloadCSV()">CSV</button>
-        </div>
+        <div class="header-actions"></div>
     </header>
 
     <!-- RECORD -->
@@ -829,8 +827,17 @@
             <div style="font-size:11px;color:var(--text3);">バックアップ・復元・エクスポート</div>
         </div>
         <button class="btn-action btn-csv" onclick="downloadCSV()">📥 CSVダウンロード</button>
-        <button class="btn-action" onclick="exportData()">📤 データをコピー（バックアップ）</button>
-        <button class="btn-action" onclick="openImportModal()">📋 データを貼り付け（復元）</button>
+        <div style="margin-bottom:8px;">
+            <button class="btn-action" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0;" onclick="toggleBackupSection()">
+                <span>🔒 バックアップ・復元</span>
+                <span id="backupChevron" style="font-size:11px;color:var(--text3);transition:transform 0.25s;">▼</span>
+            </button>
+            <div id="backupSection" style="display:none;margin-top:6px;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;animation:fadeIn 0.2s ease;">
+                <div style="font-size:10px;color:var(--text3);margin-bottom:10px;line-height:1.6;">⚠️ Firestoreと同期中のため通常不要です。誤削除時の緊急復元用としてご利用ください。</div>
+                <button class="btn-action" style="margin-bottom:6px;" onclick="exportData()">📤 データをコピー（バックアップ）</button>
+                <button class="btn-action" style="margin-bottom:0;" onclick="openImportModal()">📋 データを貼り付け（復元）</button>
+            </div>
+        </div>
         <div class="divider"></div>
         <div class="card" style="margin-bottom:16px;">
             <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:4px;">カスタム飲み物を追加</div>
@@ -1540,7 +1547,7 @@ typeは内容に応じて選択：positive=良い点、warning=注意点、dange
 必ず3〜4ブロック返してください。`;
 
     try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetch('https://script.google.com/macros/s/AKfycbxX4wsVsAnh_DaDsmFCKAhV_Qxyh-Q52Xz_cINn8ImdviSrB2AufXm_dn4-050quRlS2Q/exec', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1577,6 +1584,14 @@ typeは内容に応じて選択：positive=良い点、warning=注意点、dange
     btn.disabled = false;
     btn.classList.remove('loading');
     btn.querySelector('.ai-btn-text').textContent = '✦ 再分析する';
+}
+
+function toggleBackupSection() {
+    const sec = document.getElementById('backupSection');
+    const chev = document.getElementById('backupChevron');
+    const isOpen = sec.style.display !== 'none';
+    sec.style.display = isOpen ? 'none' : 'block';
+    chev.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
 function labelIcon(type) {
