@@ -685,6 +685,27 @@
             60% { transform: translateX(-5px); }
             80% { transform: translateX(5px); }
         }
+        /* ── Accordion ── */
+        .accordion-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 18px; margin-bottom: 12px; overflow: hidden;
+        }
+        .accordion-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 18px; cursor: pointer; font-size: 13px; font-weight: 700;
+            color: var(--text); transition: background 0.2s;
+        }
+        .accordion-header:active { background: var(--surface2); }
+        .accordion-arrow {
+            font-size: 11px; color: var(--text3); transition: transform 0.3s;
+        }
+        .accordion-card.open .accordion-arrow { transform: rotate(180deg); }
+        .accordion-body {
+            display: none; padding: 0 16px 16px;
+            border-top: 1px solid var(--border);
+            padding-top: 14px;
+        }
+        .accordion-card.open .accordion-body { display: block; }
     </style>
 </head>
 <body>
@@ -706,7 +727,9 @@
             <div class="logo">The <em>Drinker</em> 🥂</div>
             <div class="logo-sub">ALCOHOL TRACKER</div>
         </div>
-        <div class="header-actions"></div>
+        <div class="header-actions">
+            <button class="btn-ghost" onclick="downloadCSV()">CSV</button>
+        </div>
     </header>
 
     <!-- RECORD -->
@@ -822,39 +845,45 @@
 
     <!-- SETTINGS -->
     <div id="view-settings" style="display:none;">
-        <div class="card" style="margin-bottom:16px;">
-            <div style="font-family:'Playfair Display',serif;font-size:18px;margin-bottom:4px;">データ管理</div>
-            <div style="font-size:11px;color:var(--text3);">バックアップ・復元・エクスポート</div>
-        </div>
-        <button class="btn-action btn-csv" onclick="downloadCSV()">📥 CSVダウンロード</button>
-        <div style="margin-bottom:8px;">
-            <button class="btn-action" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0;" onclick="toggleBackupSection()">
-                <span>🔒 バックアップ・復元</span>
-                <span id="backupChevron" style="font-size:11px;color:var(--text3);transition:transform 0.25s;">▼</span>
-            </button>
-            <div id="backupSection" style="display:none;margin-top:6px;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;animation:fadeIn 0.2s ease;">
-                <div style="font-size:10px;color:var(--text3);margin-bottom:10px;line-height:1.6;">⚠️ Firestoreと同期中のため通常不要です。誤削除時の緊急復元用としてご利用ください。</div>
-                <button class="btn-action" style="margin-bottom:6px;" onclick="exportData()">📤 データをコピー（バックアップ）</button>
-                <button class="btn-action" style="margin-bottom:0;" onclick="openImportModal()">📋 データを貼り付け（復元）</button>
+
+        <!-- アコーディオン：データ管理 -->
+        <div class="accordion-card" id="acc-data">
+            <div class="accordion-header" onclick="toggleAccordion('acc-data')">
+                <span>🗄️ データ管理</span>
+                <span class="accordion-arrow">▼</span>
+            </div>
+            <div class="accordion-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">バックアップ・復元・エクスポート</div>
+                <button class="btn-action btn-csv" onclick="downloadCSV()">📥 CSVダウンロード</button>
+                <button class="btn-action" onclick="exportData()">📤 データをコピー（バックアップ）</button>
+                <button class="btn-action" onclick="openImportModal()">📋 データを貼り付け（復元）</button>
+                <div class="divider"></div>
+                <div class="settings-row" style="margin-bottom:0;">
+                    <div><div class="settings-label">⚠️ 全データ削除</div><div class="settings-sub">この操作は元に戻せません</div></div>
+                    <button class="btn-ghost" style="background:rgba(244,63,94,0.1);color:var(--red);border-color:rgba(244,63,94,0.3);" onclick="resetAllData()">削除</button>
+                </div>
             </div>
         </div>
-        <div class="divider"></div>
-        <div class="card" style="margin-bottom:16px;">
-            <div style="font-family:'Playfair Display',serif;font-size:16px;margin-bottom:4px;">カスタム飲み物を追加</div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">オリジナルのお酒を登録できます</div>
-            <div class="custom-drink-grid">
-                <input class="custom-input" id="customName" placeholder="名前（例：芋焼酎）">
-                <input class="custom-input" id="customIcon" placeholder="アイコン（例：🥃）">
-                <input class="custom-input" id="customAlc" placeholder="アルコール量(g)" type="number" step="0.1">
-                <input class="custom-input" id="customNote" placeholder="備考">
+
+        <!-- アコーディオン：カスタム飲み物 -->
+        <div class="accordion-card" id="acc-custom">
+            <div class="accordion-header" onclick="toggleAccordion('acc-custom')">
+                <span>🍹 カスタム飲み物を追加</span>
+                <span class="accordion-arrow">▼</span>
             </div>
-            <button class="btn-add-custom" onclick="addCustomDrink()">＋ カスタム飲み物を追加</button>
-            <div id="customDrinkList" style="margin-top:10px;"></div>
+            <div class="accordion-body">
+                <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">オリジナルのお酒を登録できます</div>
+                <div class="custom-drink-grid">
+                    <input class="custom-input" id="customName" placeholder="名前（例：芋焼酎）">
+                    <input class="custom-input" id="customIcon" placeholder="アイコン（例：🥃）">
+                    <input class="custom-input" id="customAlc" placeholder="アルコール量(g)" type="number" step="0.1">
+                    <input class="custom-input" id="customNote" placeholder="備考">
+                </div>
+                <button class="btn-add-custom" onclick="addCustomDrink()">＋ カスタム飲み物を追加</button>
+                <div id="customDrinkList" style="margin-top:10px;"></div>
+            </div>
         </div>
-        <div class="settings-row" style="margin-bottom:16px;">
-            <div><div class="settings-label">⚠️ 全データ削除</div><div class="settings-sub">この操作は元に戻せません</div></div>
-            <button class="btn-ghost" style="background:rgba(244,63,94,0.1);color:var(--red);border-color:rgba(244,63,94,0.3);" onclick="resetAllData()">削除</button>
-        </div>
+
         <div class="card">
             <div class="card-label">このアプリについて</div>
             <div style="font-size:11px;color:var(--text3);line-height:1.8;">
@@ -1443,6 +1472,11 @@ function showToast(msg) {
     toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+// ─── Accordion ────────────────────────────────────────────────
+function toggleAccordion(id) {
+    document.getElementById(id).classList.toggle('open');
+}
+
 // ─── Password ─────────────────────────────────────────────────
 const PW = '00000';
 function checkPassword() {
@@ -1547,7 +1581,7 @@ typeは内容に応じて選択：positive=良い点、warning=注意点、dange
 必ず3〜4ブロック返してください。`;
 
     try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbxX4wsVsAnh_DaDsmFCKAhV_Qxyh-Q52Xz_cINn8ImdviSrB2AufXm_dn4-050quRlS2Q/exec', {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1584,14 +1618,6 @@ typeは内容に応じて選択：positive=良い点、warning=注意点、dange
     btn.disabled = false;
     btn.classList.remove('loading');
     btn.querySelector('.ai-btn-text').textContent = '✦ 再分析する';
-}
-
-function toggleBackupSection() {
-    const sec = document.getElementById('backupSection');
-    const chev = document.getElementById('backupChevron');
-    const isOpen = sec.style.display !== 'none';
-    sec.style.display = isOpen ? 'none' : 'block';
-    chev.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
 function labelIcon(type) {
