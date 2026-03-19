@@ -8,6 +8,31 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0a0f">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+    const firebaseConfig = {
+        apiKey: "AIzaSyDBtWBFLCZdjb5dhTbJiSTQrPeHrs58mB4",
+        authDomain: "the-drinker-d02f3.firebaseapp.com",
+        projectId: "the-drinker-d02f3",
+        storageBucket: "the-drinker-d02f3.firebasestorage.app",
+        messagingSenderId: "992027553553",
+        appId: "1:992027553553:web:517163230c63bff29966b0"
+    };
+    const _app = initializeApp(firebaseConfig);
+    const _db = getFirestore(_app);
+    const _ref = doc(_db, 'drinker', 'data');
+    window._fsGet = async () => {
+        try { const s = await getDoc(_ref); return s.exists() ? s.data() : {}; }
+        catch(e) { console.warn('Firestore get:', e); return {}; }
+    };
+    window._fsSet = async (key, val) => {
+        try { await setDoc(_ref, { [key]: JSON.stringify(val) }, { merge: true }); }
+        catch(e) { console.warn('Firestore set:', e); }
+    };
+    document.dispatchEvent(new Event('fsReady'));
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Mono:wght@400;700&family=Noto+Sans+JP:wght@300;400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -891,15 +916,36 @@ let monthlyChart = null, scatterChart = null;
 
 function getDRINK_TYPES() { return [...DEFAULT_DRINKS, ...customDrinks]; }
 
-// ─── Storage ──────────────────────────────────────────────────
-async function storageGet(key) {
-    try { const r = await window.storage.get(key); return r ? JSON.parse(r.value) : null; }
-    catch { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
+// ─── Storage (Firestore) ─────────────────────────────────────
+let _fsCache = null;
+
+async function _ensureCache() {
+    if (_fsCache) return;
+    // fsReady を待つ（最大5秒）
+    if (!window._fsGet) {
+        await new Promise(resolve => {
+            document.addEventListener('fsReady', resolve, { once: true });
+            setTimeout(resolve, 5000);
+        });
+    }
+    const raw = await window._fsGet();
+    _fsCache = {};
+    for (const [k, v] of Object.entries(raw)) {
+        try { _fsCache[k] = JSON.parse(v); } catch { _fsCache[k] = v; }
+    }
 }
+
+async function storageGet(key) {
+    await _ensureCache();
+    return _fsCache[key] ?? null;
+}
+
 async function storageSet(key, val) {
-    const str = JSON.stringify(val);
-    try { await window.storage.set(key, str); } catch {}
-    try { localStorage.setItem(key, str); } catch {}
+    if (!_fsCache) _fsCache = {};
+    _fsCache[key] = val;
+    if (window._fsSet) await window._fsSet(key, val);
+    // fallback
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
 }
 
 // ─── Init ─────────────────────────────────────────────────────
@@ -1376,7 +1422,8 @@ async function resetAllData() {
     if (!confirm('⚠️ 本当に全削除しますか？（2回目の確認）')) return;
     db={}; dailyInfo={}; customDrinks=[];
     await storageSet('drinker_logs',{}); await storageSet('drinker_info',{}); await storageSet('drinker_custom',[]);
-    try { await window.storage.delete('drinker_logs'); await window.storage.delete('drinker_info'); await window.storage.delete('drinker_custom'); } catch {}
+    _fsCache = {};
+    if (window._fsSet) { await window._fsSet('drinker_logs', {}); await window._fsSet('drinker_info', {}); await window._fsSet('drinker_custom', []); }
     try { localStorage.clear(); } catch {}
     render(); showToast('🗑️ 全データを削除しました');
 }
@@ -1390,7 +1437,7 @@ function showToast(msg) {
 }
 
 // ─── Password ─────────────────────────────────────────────────
-const PW = 'yoshi';
+const PW = '00000';
 function checkPassword() {
     const val = document.getElementById('pwInput').value;
     const errEl = document.getElementById('pwError');
